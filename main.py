@@ -59,45 +59,44 @@ async def on_message(message):
             muted_role = discord.utils.get(ctx.guild.roles, name='Muted')
             await message.author.add_roles(muted_role)
 
-    if message.author.id != 775893655356702762:
-        exp_gained = random.randint(1, 4)
+    exp_gained = random.randint(1, 4)
 
+    cursor = db.cursor()
+    cursor.execute(f"SELECT exp FROM exp WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
+    current_exp = cursor.fetchone()
+    if current_exp is None:
+        db.execute("INSERT into exp(guild_id, user_id, exp, lvl_req, lvl) VALUES(?, ?, ?, ?, ?)",
+                   (ctx.guild.id, message.author.id, exp_gained, 100, 1))
+        db.commit()
+    else:
+        db.execute(
+            f"UPDATE exp SET exp = exp + {exp_gained} WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
+        db.commit()
         cursor = db.cursor()
-        cursor.execute(f"SELECT exp FROM exp WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
-        current_exp = cursor.fetchone()
-        if current_exp is None:
-            db.execute("INSERT into exp(guild_id, user_id, exp, lvl_req, lvl) VALUES(?, ?, ?, ?, ?)",
-                       (ctx.guild.id, message.author.id, exp_gained, 100, 1))
-            db.commit()
-        else:
+        cursor.execute(f"SELECT lvl_req FROM exp WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
+        lvl_req = cursor.fetchone()[0]
+        if current_exp[0] + exp_gained >= lvl_req:
             db.execute(
-                f"UPDATE exp SET exp = exp + {exp_gained} WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
+                f"UPDATE exp SET lvl = lvl + {1} WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
+            db.commit()
+            db.execute(
+                f"UPDATE exp SET exp = {0} WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
+            db.commit()
+            db.execute(
+                f"UPDATE exp SET lvl_req = {int(lvl_req * 1.25)} WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
             db.commit()
             cursor = db.cursor()
-            cursor.execute(f"SELECT lvl_req FROM exp WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
-            lvl_req = cursor.fetchone()[0]
-            if current_exp[0] + exp_gained >= lvl_req:
-                db.execute(
-                    f"UPDATE exp SET lvl = lvl + {1} WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
-                db.commit()
-                db.execute(
-                    f"UPDATE exp SET exp = {0} WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
-                db.commit()
-                db.execute(
-                    f"UPDATE exp SET lvl_req = {int(lvl_req * 1.25)} WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
-                db.commit()
-                cursor = db.cursor()
-                cursor.execute(f"SELECT lvl FROM exp WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
-                current_lvl = cursor.fetchone()[0]
-                embed = discord.Embed(title="Level Up:", color=message.author.color)
-                embed.set_thumbnail(url=f'{message.author.avatar_url}')
-                embed.add_field(
-                    name=f"{message.author.display_name} leveled up from level {current_lvl - 1} to {current_lvl}!",
-                    value=f"Required exp to level up is now {round(lvl_req * 1.25)}.")
+            cursor.execute(f"SELECT lvl FROM exp WHERE user_id = {message.author.id} AND guild_id = {ctx.guild.id}")
+            current_lvl = cursor.fetchone()[0]
+            embed = discord.Embed(title="Level Up:", color=message.author.color)
+            embed.set_thumbnail(url=f'{message.author.avatar_url}')
+            embed.add_field(
+                name=f"{message.author.display_name} leveled up from level {current_lvl - 1} to {current_lvl}!",
+                value=f"Required exp to level up is now {round(lvl_req * 1.25)}.")
 
-                channel1 = bot.get_channel(level_up_channel)
+            channel1 = bot.get_channel(level_up_channel)
 
-                await channel1.send(f"{message.author.mention}", embed=embed)
+            await channel1.send(f"{message.author.mention}", embed=embed)
 
     await bot.process_commands(message)
 
