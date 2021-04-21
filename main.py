@@ -13,12 +13,17 @@ blacklist = [" niger ", " nigger ", " nigga ", " nig ", " fag ", " faggot ", " t
              " porch monkey ", " raghead ", " redskin ", " sliteye ", " slanteye ", " towel head ", " shemale ",
              " shylock ", " kike "]
 
+member_count_channel = 0
+member_leave_channel = 0
+member_join_channel = 0
+level_up_channel = 0
+verify_channel - 0
 
 @bot.event
 async def on_ready():
     print('Bot is ready!')
-    channel1 = bot.get_channel(819035422437015572)
-    guild = bot.get_guild(818677928358576148)
+    channel1 = bot.get_channel(member_count_channel)
+    guild = bot.get_guild(member_count_channel)
     await channel1.edit(name=f"Members: {guild.member_count - 3}")
     await bot.change_presence(activity=discord.Activity(name="deez nuts", type=5))
 
@@ -37,10 +42,6 @@ async def on_message(message):
         current_prefix = current_prefix[0]
 
     bot.command_prefix = current_prefix
-
-    if channel == 819039790715633704:
-        await message.add_reaction("✅")
-        await message.add_reaction("❌")
 
     content = message.content.lower()
     content = content.replace("*", "")
@@ -94,7 +95,7 @@ async def on_message(message):
                     name=f"{message.author.display_name} leveled up from level {current_lvl - 1} to {current_lvl}!",
                     value=f"Required exp to level up is now {round(lvl_req * 1.25)}.")
 
-                channel1 = bot.get_channel(819039449379635231)
+                channel1 = bot.get_channel(level_up_channel)
 
                 await channel1.send(f"{message.author.mention}", embed=embed)
 
@@ -103,75 +104,36 @@ async def on_message(message):
 
 @bot.event
 async def on_member_join(member):
-    channel = bot.get_channel(818958012257009674)
+    channel = bot.get_channel(member_join_channel)
     embed = discord.Embed(title="Arrival:", color=0x00FF00)
     embed.add_field(name="User:", value=f"Welcome <@!{member.id}>!")
     embed.set_thumbnail(url=f"{member.avatar_url}")
     await channel.send(embed=embed)
-    channel1 = bot.get_channel(819035422437015572)
-    guild = bot.get_guild(818677928358576148)
+    channel1 = bot.get_channel(member_count_channel)
+    guild = bot.get_guild(member_count_channel)
     await channel1.edit(name=f"Members: {guild.member_count - 3}")
 
 
 @bot.event
 async def on_member_remove(member):
-    channel = bot.get_channel(818958012257009674)
+    channel = bot.get_channel(member_leave_channel)
     embed = discord.Embed(title="Departure:", color=0xFF0000)
     embed.add_field(name="User:", value=f"Bye-bye <@!{member.id}>!")
     embed.set_thumbnail(url=f"{member.avatar_url}")
     await channel.send(embed=embed)
-    channel1 = bot.get_channel(819035422437015572)
-    guild = bot.get_guild(818677928358576148)
+    channel1 = bot.get_channel(member_count_channel)
+    guild = bot.get_guild(member_count_channel)
     await channel1.edit(name=f"Members: {guild.member_count - 3}")
 
 
 @bot.command(brief="Verify your account in the server.")
 async def verify(ctx):
     message = ctx.message
-    if message.channel.id == 818680118427123763:
+    if message.channel.id == verify_channel:
         verified_role = discord.utils.get(ctx.guild.roles, name='Pedestrian')
         await message.author.add_roles(verified_role)
 
     await message.delete()
-
-
-@bot.command(brief="Get certain roles.")
-async def role(ctx, role_id: int):
-    if ctx.channel.id == 819008725695201280:
-        await ctx.message.delete()
-        assigned_role = discord.utils.get(ctx.guild.roles, id=role_id)
-        if assigned_role.position > 3:
-            embed = discord.Embed(title="Role Error:", color=0xFF0000)
-            embed.set_thumbnail(url=f"{ctx.message.author.avatar_url}")
-            embed.add_field(name="Missing Permissions:", value='Please enter a valid role ID.')
-            await ctx.send(embed=embed, delete_after=5)
-            return
-        else:
-            await ctx.message.author.add_roles(assigned_role)
-            embed = discord.Embed(title="Role:", color=0x00FF00)
-            embed.set_thumbnail(url=f"{ctx.message.author.avatar_url}")
-            embed.add_field(name="Role Given:", value=f'You received the {assigned_role.name} role.')
-            await ctx.send(embed=embed, delete_after=5)
-            return
-    else:
-        embed = discord.Embed(title="Role Error:", color=0xFF0000)
-        embed.set_thumbnail(url=f"{ctx.message.author.avatar_url}")
-        embed.add_field(name="Description:", value=f'Command was run in the wrong channel.')
-
-        await ctx.send(embed=embed, delete_after=5)
-        return
-
-
-@role.error
-async def role_handler(ctx, error):
-    member = ctx.message.author
-    if isinstance(error, commands.MissingRequiredArgument):
-        embed = discord.Embed(title="Role Error:", color=0xFF0000)
-        embed.set_thumbnail(url=f"{member.avatar_url}")
-        embed.add_field(name="Missing ID:", value='Please enter a role ID.')
-        await ctx.send(embed=embed, delete_after=5)
-    else:
-        raise error
 
 
 @bot.command(brief="Change your prefix.")
@@ -195,4 +157,4 @@ for filename in os.listdir("./cogs"):
     if filename.endswith('.py'):
         bot.load_extension(f'cogs.{filename[0:-3]}')
 
-bot.run('Nzc1ODkzNjU1MzU2NzAyNzYy.X6s9Rg.bq8o3Y5iMByv7kfC-yDKZ67vJrU')
+bot.run('token')
