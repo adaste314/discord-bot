@@ -9,11 +9,10 @@ class FunCog(commands.Cog, name="Fun"):
 
     @commands.command(brief="Displays a specified user's profile picture.")
     async def pfp(self, ctx, member: discord.Member = None):
-        if member is None:
-            member = ctx.message.author
+        member = member or ctx.author
 
         embed = discord.Embed(title=f"{member.display_name}'s Profile Picture:", color=member.color)
-        embed.set_image(url=f"{member.avatar_url}")
+        embed.set_image(url=member.avatar_url)
         await ctx.send(embed=embed)
 
 
